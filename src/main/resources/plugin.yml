@@ -3,24 +3,24 @@ version: '${version}'
 main: com.eyreland.enderlink.EnderLinkPlugin
 api-version: '26.2'
 folia-supported: true
-description: '随身末影箱与原生容量管理'
+description: 'Portable ender chests with native capacity management'
 author: PluginsKers
 website: https://github.com/PluginsKers/enderlink
 
 commands:
   enderlink:
-    description: 打开个人末影箱或管理容量
-    usage: '/enderlink 或 /enderlink size <在线玩家> [27|36|45|54]'
+    description: Open your ender chest or manage its capacity
+    usage: '/enderlink or /enderlink size <online player> [27|36|45|54]'
 
 permissions:
   enderlink.open:
-    description: 打开个人末影箱
+    description: Open your own ender chest
     default: true
   enderlink.size.query:
-    description: 查询末影箱容量
+    description: Query ender chest capacity
     default: op
   enderlink.size:
-    description: 修改末影箱容量
+    description: Change ender chest capacity
     default: false
     children:
       enderlink.size.query: true
