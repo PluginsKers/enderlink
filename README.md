@@ -46,4 +46,10 @@ The client uses the registered server channel; no additional handshake or capabi
 
 Use `gradlew.bat` on Windows. The version comes from `gradle.properties` and can be overridden with `-Pversion`. Jars are written to `build/libs`. See [TESTING.md](TESTING.md) for native server tests.
 
-The logo and banner use vanilla Minecraft artwork by Mojang Studios.
+## License
+
+Copyright (C) 2026 PluginsKers.
+
+Project code is licensed under [AGPL-3.0-only](LICENSE), with a Minecraft server linking permission. See [NOTICE](NOTICE) for that permission and third-party notices.
+
+The logo and banner use vanilla Minecraft artwork by Mojang Studios and are not covered by this license.

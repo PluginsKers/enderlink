@@ -37,6 +37,10 @@ tasks.register<Jar>("nativeTestJar") {
     from(nativeTest.output)
 }
 
+tasks.withType<Jar>().configureEach {
+    into("META-INF") { from("LICENSE", "NOTICE") }
+}
+
 tasks {
     test { useJUnitPlatform() }
     processResources {
