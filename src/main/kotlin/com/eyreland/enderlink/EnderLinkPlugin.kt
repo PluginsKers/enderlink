@@ -10,7 +10,7 @@ class EnderLinkPlugin : JavaPlugin() {
         try {
             NativeEnderChest.initialize()
         } catch (failure: Throwable) {
-            logger.log(Level.SEVERE, "末影箱存储预检失败，关闭服务器", failure)
+            logger.log(Level.SEVERE, "Ender chest storage preflight failed; shutting down the server", failure)
             server.shutdown()
             throw failure
         }

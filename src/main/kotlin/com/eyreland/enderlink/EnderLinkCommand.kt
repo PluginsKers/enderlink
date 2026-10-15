@@ -10,6 +10,7 @@ import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
+import java.util.logging.Level
 
 class EnderLinkCommand(
     private val plugin: JavaPlugin,
@@ -29,29 +30,36 @@ class EnderLinkCommand(
     fun execute(sender: CommandSender, args: List<String>) {
         if (args.isEmpty() && sender is Player) return manager.requestOpen(sender)
         val query = args.size == 2 && args[0] == "size"
-        if (!authorized(sender, query)) return sender.error("你没有末影箱管理权限")
-        if (args.size !in 2..3 || args[0] != "size") return sender.usage("/enderlink size <在线玩家> [27|36|45|54]")
+        if (!authorized(sender, query)) return sender.error("command.denied")
+        if (args.size !in 2..3 || args[0] != "size") {
+            return sender.sendMessage(Messages.text(sender, "command.usage").color(NamedTextColor.YELLOW))
+        }
         val size = args.getOrNull(2)?.toIntOrNull()
-        if (args.size == 3 && size !in EnderChestManager.SIZES) return sender.error("格数必须为 27、36、45 或 54")
-        val target = plugin.server.getPlayerExact(args[1]) ?: return sender.error("玩家不在线")
+        if (args.size == 3 && size !in EnderChestManager.SIZES) return sender.error("capacity.invalid")
+        val target = plugin.server.getPlayerExact(args[1]) ?: return sender.error("player.offline")
         onPlayer(target, {
             if (!authorized(sender, query)) {
-                reply(sender) { sender.error("末影箱管理权限已失效") }
+                reply(sender) { sender.error("command.revoked") }
             } else if (!target.isOnline) {
-                reply(sender) { sender.error("玩家已离线") }
+                reply(sender) { sender.error("player.offline") }
             } else if (size == null) {
                 val current = target.enderChest.size
-                reply(sender) { sender.info("${target.name} 的末影箱容量为 $current 格") }
+                reply(sender) { sender.info("capacity.query", Component.text(target.name), Component.text(current)) }
             } else {
                 val result = runCatching { manager.setSize(target, size) }
                 reply(sender) {
                     result.fold(
-                        onSuccess = { sender.success("${target.name} 的末影箱容量已设为 $size 格") },
-                        onFailure = { sender.error(it.message ?: "末影箱容量修改失败") },
+                        onSuccess = { sender.info("capacity.updated", Component.text(target.name), Component.text(size)) },
+                        onFailure = { failure ->
+                            if (failure !is EnderChestManager.CapacityException) {
+                                plugin.logger.log(Level.SEVERE, "Could not change ender chest capacity for ${target.name}", failure)
+                            }
+                            sender.error((failure as? EnderChestManager.CapacityException)?.messageKey ?: "capacity.failed")
+                        },
                     )
                 }
             }
-        }, { reply(sender) { sender.error("玩家已离线") } })
+        }, { reply(sender) { sender.error("player.offline") } })
     }
 
     fun tabComplete(sender: CommandSender, args: List<String>): List<String> {
@@ -75,8 +83,7 @@ class EnderLinkCommand(
         if (sender is Player) onPlayer(sender, action, {}) else action()
     }
 
-    private fun CommandSender.error(message: String) = sendMessage(Component.text(message, NamedTextColor.RED))
-    private fun CommandSender.info(message: String) = sendMessage(Component.text(message, NamedTextColor.WHITE))
-    private fun CommandSender.success(message: String) = info(message)
-    private fun CommandSender.usage(message: String) = sendMessage(Component.text("用法: $message", NamedTextColor.YELLOW))
+    private fun CommandSender.error(key: String) = sendMessage(Messages.text(this, key).color(NamedTextColor.RED))
+    private fun CommandSender.info(key: String, vararg args: Component) =
+        sendMessage(Messages.text(this, key, *args).color(NamedTextColor.WHITE))
 }

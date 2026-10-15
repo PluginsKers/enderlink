@@ -114,7 +114,7 @@ class EnderChestNativeTest : JavaPlugin(), Listener {
         handle.connection.connection.channel.pipeline().addLast("ender_title_probe", object : ChannelOutboundHandlerAdapter() {
             override fun write(context: ChannelHandlerContext, message: Any, promise: ChannelPromise) {
                 if (message is ClientboundOpenScreenPacket) packets.add(message)
-                if (message is ClientboundSystemChatPacket && message.content.string.contains("/enderlink")) {
+                if (message is ClientboundSystemChatPacket && message.content.string == "Ender Chest [Open]") {
                     commandHints.add(message.content.string)
                 }
                 context.write(message, promise)

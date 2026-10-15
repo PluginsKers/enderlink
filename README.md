@@ -20,7 +20,9 @@ Requires Folia 26.2 and Java 25. Place the plugin jar in the server's `plugins` 
 
 The target player must be online. `enderlink.size` includes query permission.
 
-First-login and item-interaction hints point players to the command. Sneaking while right-clicking a block still places the held ender chest.
+First-login and item-interaction hints include a clickable `[Open]` button. Hovering shows `/enderlink`. Sneaking while right-clicking a block still places the held ender chest.
+
+Messages follow the player's current client language. English (`en_us`) and Simplified Chinese (`zh_cn`) are included. Other languages, the console, and RCON use English. Translations are stored in `src/main/resources/lang`.
 
 ## Storage
 

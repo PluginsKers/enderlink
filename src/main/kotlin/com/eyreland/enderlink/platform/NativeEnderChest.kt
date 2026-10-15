@@ -62,14 +62,14 @@ object NativeEnderChest {
 
     private fun resize(container: SimpleContainer, size: Int) {
         val oldSize = container.containerSize
-        require((size until oldSize).all { container.getItem(it).isEmpty }) { "超出目标容量的末影箱格子中还有物品" }
+        require((size until oldSize).all { container.getItem(it).isEmpty }) { "Ender chest slots beyond the requested capacity still contain items" }
         val items = NonNullList.withSize(size, ItemStack.EMPTY)
         for (slot in 0 until minOf(oldSize, size)) items[slot] = container.getItem(slot)
         val previous = itemsField.get(container)
         try {
             itemsField.set(container, items)
             sizeField.setInt(container, size)
-            check(container.containerSize == size && container.contents.size == size) { "原生末影箱容量未能调整至 $size 格" }
+            check(container.containerSize == size && container.contents.size == size) { "Could not resize the native ender chest to $size slots" }
         } catch (failure: Exception) {
             itemsField.set(container, previous)
             sizeField.setInt(container, oldSize)
@@ -88,7 +88,7 @@ object NativeEnderChest {
             4 -> MenuType.GENERIC_9x4
             5 -> MenuType.GENERIC_9x5
             6 -> MenuType.GENERIC_9x6
-            else -> error("末影箱容量无效")
+            else -> error("Invalid ender chest capacity")
         }
         val layout = ChestMenu(type, menu.containerId, (view.player as CraftPlayer).handle.inventory, container, rows)
         rowsField.setInt(menu, rows)
@@ -115,7 +115,7 @@ object NativeEnderChest {
         for (slot in 227 until 254) wildcardSlots.add(slot)
         for (slot in 27 until 54) {
             val name = "enderchest.$slot"
-            check(name !in names) { "其他插件已修改末影箱槽位选择器" }
+            check(name !in names) { "Another plugin has modified the ender chest slot selectors" }
             slots.add(SlotRange.of(name, IntList.of(200 + slot)))
         }
         slots.filter { it.serializedName.startsWith("enderchest.") }.forEach { names[it.serializedName] = it }

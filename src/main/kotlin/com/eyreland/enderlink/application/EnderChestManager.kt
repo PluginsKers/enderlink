@@ -1,5 +1,7 @@
 package com.eyreland.enderlink.application
 
+import com.destroystokyo.paper.ClientOption
+import com.eyreland.enderlink.Messages
 import com.eyreland.enderlink.platform.NativeEnderChest
 import com.eyreland.enderlink.platform.NativePlayerData
 import io.papermc.paper.connection.PlayerConfigurationConnection
@@ -29,6 +31,7 @@ import org.bukkit.inventory.InventoryView
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.plugin.messaging.PluginMessageListener
+import java.util.Locale
 import java.util.logging.Level
 
 class EnderChestManager(
@@ -63,8 +66,12 @@ class EnderChestManager(
         try {
             NativeEnderChest.prepareLoad(connection)
         } catch (failure: Throwable) {
-            event.kickMessage(Component.text("末影箱加载失败，请联系管理员"))
-            fatal(failure)
+            try {
+                val locale = Locale.forLanguageTag(connection.getClientOption(ClientOption.LOCALE).replace('_', '-'))
+                event.kickMessage(Messages.text(locale, "load.failed"))
+            } finally {
+                fatal(failure)
+            }
         }
     }
 
@@ -72,13 +79,13 @@ class EnderChestManager(
     fun afterLoad(event: PlayerJoinEvent) {
         try {
             val player = event.player
-            check(player.enderChest.size == 54) { "末影箱加载前扩容未执行" }
+            check(player.enderChest.size == 54) { "Ender chest was not expanded before loading player data" }
             val data = player.persistentDataContainer
             val storedKey = if (data.has(capacityKey)) capacityKey else legacyCapacityKey
             val capacity = if (data.has(storedKey)) {
-                requireNotNull(data.get(storedKey, PersistentDataType.INTEGER)) { "末影箱容量存档类型无效" }
+                requireNotNull(data.get(storedKey, PersistentDataType.INTEGER)) { "Invalid ender chest capacity data type" }
             } else 27
-            require(capacity in SIZES) { "末影箱容量存档无效：$capacity" }
+            require(capacity in SIZES) { "Invalid stored ender chest capacity: $capacity" }
             resize(player, capacity)
             if (data.has(legacyCapacityKey)) {
                 if (capacity == 27) data.remove(capacityKey) else data.set(capacityKey, PersistentDataType.INTEGER, capacity)
@@ -159,17 +166,24 @@ class EnderChestManager(
     }
 
     private fun showCommandHint(player: Player) {
-        player.sendMessage(Component.text("使用 /enderlink 或背包内的 Ender Link 按钮打开末影箱，无需携带物品", NamedTextColor.YELLOW)
-            .clickEvent(ClickEvent.runCommand("/enderlink")))
+        player.sendMessage(
+            Messages.text(player, "hint",
+                Messages.text(player, "open").color(NamedTextColor.GREEN)
+                    .clickEvent(ClickEvent.runCommand("/enderlink"))
+                    .hoverEvent(Messages.text(player, "open.hover")),
+            ).color(NamedTextColor.WHITE),
+        )
     }
 
     fun setSize(player: Player, capacity: Int) {
-        require(capacity in SIZES) { "格数必须为 27、36、45 或 54" }
+        if (capacity !in SIZES) throw CapacityException("capacity.invalid")
         val inventory = player.enderChest
-        check(inventory.viewers.isEmpty()) { "末影箱已打开，请先关闭" }
+        if (inventory.viewers.isNotEmpty()) throw CapacityException("capacity.open")
         val oldSize = inventory.size
         if (oldSize == capacity) return
-        require((capacity until oldSize).all { inventory.getItem(it)?.type?.isAir != false }) { "请先取出超出目标容量的物品" }
+        if ((capacity until oldSize).any { inventory.getItem(it)?.type?.isAir == false }) {
+            throw CapacityException("capacity.occupied")
+        }
         val data = player.persistentDataContainer
         val oldValue = data.get(capacityKey, PersistentDataType.INTEGER)
         resize(player, capacity)
@@ -184,14 +198,14 @@ class EnderChestManager(
             } catch (rollback: Throwable) {
                 failure.addSuppressed(rollback)
                 fatal(failure)
-                throw IllegalStateException("末影箱容量保存失败，无法确认原容量已恢复，服务器正在关闭", failure)
+                throw CapacityException("capacity.shutdown", failure)
             }
-            throw IllegalStateException("末影箱容量保存失败，已恢复原容量", failure)
+            throw CapacityException("capacity.restored", failure)
         }
     }
 
     private fun fatal(failure: Throwable) {
-        plugin.logger.log(Level.SEVERE, "末影箱发生异常，为避免物品丢失，正在关闭服务器", failure)
+        plugin.logger.log(Level.SEVERE, "Ender chest failure; shutting down the server to prevent item loss", failure)
         plugin.server.shutdown()
     }
 
@@ -199,4 +213,6 @@ class EnderChestManager(
         const val OPEN_CHANNEL = "enderlink:open_v1"
         val SIZES = listOf(27, 36, 45, 54)
     }
+
+    class CapacityException(val messageKey: String, cause: Throwable? = null) : IllegalStateException(messageKey, cause)
 }

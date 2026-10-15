@@ -4,6 +4,9 @@ import com.eyreland.enderlink.application.EnderChestManager
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TranslatableComponent
 import net.kyori.adventure.text.event.ClickEvent
+import net.kyori.adventure.text.event.HoverEvent
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.Material
@@ -33,6 +36,7 @@ import org.mockbukkit.mockbukkit.inventory.InventoryMock
 import org.mockbukkit.mockbukkit.inventory.PlayerInventoryViewMock
 import org.mockbukkit.mockbukkit.inventory.SimpleInventoryViewMock
 import java.lang.reflect.Proxy
+import java.util.Locale
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -122,8 +126,7 @@ class EnderChestTest : PluginTest() {
 
             assertFalse(player.enderChest.viewers.contains(player))
             assertEquals(contents, player.enderChest.getItem(53))
-            val hint = player.nextComponentMessage()!!
-            assertEquals(ClickEvent.runCommand("/enderlink"), hint.clickEvent())
+            assertCommandHint(player.nextComponentMessage()!!)
             assertEquals(held, player.inventory.getItem(hand))
             assertEquals(3, player.inventory.getItem(hand).amount)
         }
@@ -181,7 +184,7 @@ class EnderChestTest : PluginTest() {
                         server.scheduler.performTicks(2)
                         assertSame(view, player.openInventory)
                         if (sneaking) assertNull(player.nextMessage())
-                        else assertTrue(player.nextMessage()!!.contains("/enderlink"))
+                        else assertCommandHint(player.nextComponentMessage()!!)
                         assertEquals(held, player.inventory.getItem(hand))
                     }
                     player.closeInventory()
@@ -277,7 +280,7 @@ class EnderChestTest : PluginTest() {
                 server.scheduler.performTicks(2)
                 assertSame(view, player.openInventory)
                 assertEquals(contents, player.enderChest.getItem(size - 1))
-                assertTrue(player.nextMessage()!!.contains("/enderlink"))
+                assertCommandHint(player.nextComponentMessage()!!)
                 assertEquals(ItemStack(Material.ENDER_CHEST, 3), player.inventory.getItem(slot))
                 assertTrue(player.itemOnCursor.type.isAir)
             }
@@ -350,7 +353,7 @@ class EnderChestTest : PluginTest() {
             assertEquals(size, inventory.size)
         }
         inventory.setItem(53, ItemStack(Material.DIAMOND, 7))
-        assertFailsWith<IllegalArgumentException> { manager.setSize(player, 27) }
+        assertEquals("capacity.occupied", assertFailsWith<EnderChestManager.CapacityException> { manager.setSize(player, 27) }.messageKey)
         assertEquals(7, inventory.getItem(53)?.amount)
         inventory.clear()
         for (failure in listOf(IllegalStateException("save failed"), NoSuchMethodError("saveData"))) {
@@ -444,12 +447,42 @@ class EnderChestTest : PluginTest() {
         val manager = EnderChestManager(plugin, ::resizeMockEnderChest, {})
         repeat(2) { manager.onJoinHint(PlayerJoinEvent(player, "")) }
         server.scheduler.performTicks(2)
-        assertTrue(player.nextMessage()!!.contains("/enderlink"))
+        assertCommandHint(player.nextComponentMessage()!!)
         assertNull(player.nextMessage())
         assertTrue(player.inventory.isEmpty)
         EnderChestManager(plugin, ::resizeMockEnderChest, {}).onJoinHint(PlayerJoinEvent(player, ""))
         server.scheduler.performTicks(2)
         assertNull(player.nextMessage())
+    }
+
+    private fun assertCommandHint(hint: Component, text: String = "Ender Chest [Open]", label: String = "[Open]", hover: String = "Use /enderlink") {
+        assertEquals(text, PlainTextComponentSerializer.plainText().serialize(hint))
+        assertNull(hint.clickEvent())
+        assertNull(hint.hoverEvent())
+        val button = hint.children().single { it.clickEvent() != null }
+        assertEquals(label, PlainTextComponentSerializer.plainText().serialize(button))
+        assertEquals(NamedTextColor.GREEN, button.color())
+        assertEquals(ClickEvent.runCommand("/enderlink"), button.clickEvent())
+        assertEquals(HoverEvent.showText(Component.text(hover)), button.hoverEvent())
+    }
+
+    @Test
+    fun `hints follow the current client language and retain the open action`() {
+        val player = server.addPlayer("Owner").also { it.gameMode = GameMode.CREATIVE }
+        val manager = EnderChestManager(plugin, ::resizeMockEnderChest, {}, {})
+        player.setLocale(Locale.SIMPLIFIED_CHINESE)
+        manager.onJoinHint(PlayerJoinEvent(player, ""))
+        server.scheduler.performTicks(2)
+        assertCommandHint(player.nextComponentMessage()!!, "末影箱 [打开]", "[打开]", "使用 /enderlink")
+
+        for (locale in listOf(Locale.US, Locale.FRANCE, Locale.SIMPLIFIED_CHINESE)) {
+            player.setLocale(locale)
+            manager.onUse(PlayerInteractEvent(player, Action.RIGHT_CLICK_AIR, ItemStack(Material.ENDER_CHEST), null,
+                BlockFace.SELF, EquipmentSlot.HAND))
+            val hint = player.nextComponentMessage()!!
+            if (locale == Locale.SIMPLIFIED_CHINESE) assertCommandHint(hint, "末影箱 [打开]", "[打开]", "使用 /enderlink")
+            else assertCommandHint(hint)
+        }
     }
 
     @Test
@@ -461,7 +494,7 @@ class EnderChestTest : PluginTest() {
         val command = EnderLinkCommand(plugin, manager, { _, action, _ -> actions.add(action) })
         command.execute(operator, listOf("size", player.name, "54"))
         assertTrue(actions.isEmpty())
-        assertTrue(operator.nextMessage()!!.contains("权限"))
+        assertEquals("You do not have permission to manage ender chests.", PlainTextComponentSerializer.plainText().serialize(operator.nextComponentMessage()!!))
         command.execute(operator, listOf("size", player.name))
         actions.removeFirst().invoke()
         actions.removeFirst().invoke()
@@ -482,7 +515,7 @@ class EnderChestTest : PluginTest() {
         actions.removeFirst().invoke()
         actions.removeFirst().invoke()
         assertEquals(54, player.enderChest.size)
-        assertTrue(operator.nextMessage()!!.contains("已失效"))
+        assertEquals("You no longer have permission to manage ender chests.", PlainTextComponentSerializer.plainText().serialize(operator.nextComponentMessage()!!))
         assertEquals(listOf("54"), command.tabComplete(server.consoleSender, listOf("size", player.name, "5")))
         val rcon = Proxy.newProxyInstance(RemoteConsoleCommandSender::class.java.classLoader,
             arrayOf(RemoteConsoleCommandSender::class.java)) { _, method, args ->
