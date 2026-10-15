@@ -1,0 +1,12 @@
+.gradle/
+build/
+*.log
+run/
+.kotlin/
+
+.idea/
+*.iml
+
+.claude/
+.codegraph/
+CLAUDE.md

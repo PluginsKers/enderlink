@@ -1,0 +1,49 @@
+![Ender Link](assets/banner.png)
+
+# Ender Link
+
+Open your ender chest anywhere on Folia. The plugin manages commands, permissions, capacity, and first-login hints. No other plugin is required.
+
+Use `/enderlink` or the inventory button provided by [Ender Link Client](https://github.com/PluginsKers/ender-link-client). Neither requires carrying an ender chest item.
+
+## Installation
+
+Requires Folia 26.2 and Java 25. Place the plugin jar in the server's `plugins` folder and restart.
+
+## Commands and permissions
+
+| Command | Permission | Default |
+| --- | --- | --- |
+| `/enderlink` | `enderlink.open` | Everyone |
+| `/enderlink size <player>` | `enderlink.size.query` | Operators |
+| `/enderlink size <player> <27\|36\|45\|54>` | `enderlink.size` | Console and RCON; players need an explicit grant |
+
+The target player must be online. `enderlink.size` includes query permission.
+
+First-login and item-interaction hints point players to the command. Sneaking while right-clicking a block still places the held ender chest.
+
+## Storage
+
+Items remain in vanilla `EnderItems`. Capacity is stored in `enderlink:ender_chest_size`. The legacy `conflux:ender_chest_size` key is migrated and removed on login without requiring the old plugin. No database or inventory copy is created.
+
+Capacity changes are rejected while the chest is open or if shrinking would discard items. Failed saves restore the previous capacity. The server shuts down if storage integrity cannot be confirmed.
+
+Opening a chest fires the native Bukkit `InventoryOpenEvent`, allowing other plugins to restrict access.
+
+Before removing the plugin, empty all extra slots and restore every expanded chest to 27 slots. Migrated data cannot be downgraded directly to versions that only recognize the legacy capacity key. Hot unloading is not supported.
+
+## Client protocol
+
+`enderlink:open_v1` accepts an empty payload. The server opens only the sender's chest after checking connection, life state, game mode, permission, menu, and cursor.
+
+The client uses the registered server channel; no additional handshake or capability cache is needed.
+
+## Building
+
+```sh
+./gradlew build nativeTestJar
+```
+
+Use `gradlew.bat` on Windows. The version comes from `gradle.properties` and can be overridden with `-Pversion`. Jars are written to `build/libs`. See [TESTING.md](TESTING.md) for native server tests.
+
+The logo and banner use vanilla Minecraft artwork by Mojang Studios.

@@ -1,0 +1,26 @@
+name: enderlink
+version: '${version}'
+main: com.eyreland.enderlink.EnderLinkPlugin
+api-version: '26.2'
+folia-supported: true
+description: '随身末影箱与原生容量管理'
+author: PluginsKers
+website: https://github.com/PluginsKers/enderlink
+
+commands:
+  enderlink:
+    description: 打开个人末影箱或管理容量
+    usage: '/enderlink 或 /enderlink size <在线玩家> [27|36|45|54]'
+
+permissions:
+  enderlink.open:
+    description: 打开个人末影箱
+    default: true
+  enderlink.size.query:
+    description: 查询末影箱容量
+    default: op
+  enderlink.size:
+    description: 修改末影箱容量
+    default: false
+    children:
+      enderlink.size.query: true
