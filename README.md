@@ -4,6 +4,8 @@
 
 Open your ender chest anywhere on Folia. The plugin manages commands, permissions, capacity, and first-login hints. No other plugin is required.
 
+[Watch the Ender Link demo on YouTube](https://youtu.be/auczq3Sn7IQ).
+
 Use `/enderlink` or the inventory button provided by [Ender Link Client](https://github.com/PluginsKers/ender-link-client). Neither requires carrying an ender chest item.
 
 ## Installation
