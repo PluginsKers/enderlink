@@ -17,6 +17,7 @@ Requires Folia 26.2 and Java 25. Place the plugin jar in the server's `plugins` 
 | Command | Permission | Default |
 | --- | --- | --- |
 | `/enderlink` | `enderlink.open` | Everyone |
+| `/enderlink reload` | `enderlink.reload` | Operators, console, and RCON |
 | `/enderlink size <player>` | `enderlink.size.query` | Operators |
 | `/enderlink size <player> <27\|36\|45\|54>` | `enderlink.size` | Console and RCON; players need an explicit grant |
 
@@ -24,7 +25,9 @@ The target player must be online. `enderlink.size` includes query permission.
 
 First-login and item-interaction hints include a clickable `[Open]` button. Hovering shows `/enderlink`. Sneaking while right-clicking a block still places the held ender chest.
 
-Messages follow the player's current client language. English (`en_us`) and Simplified Chinese (`zh_cn`) are included. Other languages, the console, and RCON use English. Translations are stored in `src/main/resources/lang`.
+Messages follow the player's current client language. English (`en_us`) and Simplified Chinese (`zh_cn`) are included. Other languages, the console, and RCON use English.
+
+Startup creates `plugins/enderlink/lang/en_us.properties` and `zh_cn.properties` without overwriting existing files. Edit them as UTF-8, keep placeholders such as `{0}` and `{1}`, then run `/enderlink reload`. Missing keys use bundled messages; missing files are recreated. If reading or validating either file fails, all current messages stay active. Invalid files at startup leave bundled messages active. Reload only updates language files; replacing the plugin jar still requires a server restart.
 
 ## Storage
 

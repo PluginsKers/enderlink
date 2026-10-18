@@ -25,6 +25,7 @@ open class PluginTest {
             MockBukkit.loadWith(TestPlugin::class.java, it)
         }
         plugin.description.permissions.forEach { server.pluginManager.addPermission(it) }
+        Messages.reload(plugin)
         world = server.addSimpleWorld("world")
     }
 

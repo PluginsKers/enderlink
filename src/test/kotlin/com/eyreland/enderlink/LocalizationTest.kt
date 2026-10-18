@@ -106,7 +106,7 @@ class LocalizationTest : PluginTest() {
         assertEquals("你没有末影箱管理权限", text(player.nextComponentMessage()))
         player.addAttachment(plugin, "enderlink.size", true)
         for ((args, expected) in listOf(
-            listOf("size") to "用法: /enderlink size <在线玩家> [27|36|45|54]",
+            listOf("size") to "用法: /enderlink [reload | size <在线玩家> [27|36|45|54]]",
             listOf("size", player.name, "28") to "格数必须为 27、36、45 或 54",
             listOf("size", "Missing") to "玩家不在线",
         )) {

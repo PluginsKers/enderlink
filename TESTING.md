@@ -6,6 +6,8 @@ Unit tests cover player commands, item-interaction hints, event cancellation, ca
 
 Localization tests cover client language changes, English fallback, the command sender's language, console and RCON messages, button clicks and hover text, and failure messages with capacity rollback.
 
+Language reload tests cover file creation, permissions and completion, live updates, missing-message fallback, and preservation of all active messages after read or format errors.
+
 For native tests, use an empty server directory with Folia 26.2, Java 25 or newer, the production plugin, and `enderlink-<version>-native-test.jar`. Bind to `127.0.0.1` and set `online-mode=false` and `network-compression-threshold=-1`. The test plugin only accepts a local offline server.
 
 ```sh
