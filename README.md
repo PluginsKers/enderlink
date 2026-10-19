@@ -48,10 +48,10 @@ The client uses the registered server channel; no additional handshake or capabi
 ## Building
 
 ```sh
-./gradlew build nativeTestJar
+./gradlew shadowJar
 ```
 
-Use `gradlew.bat` on Windows. The version comes from `gradle.properties` and can be overridden with `-Pversion`. Jars are written to `build/libs`. See [TESTING.md](TESTING.md) for native server tests.
+Use `gradlew.bat` on Windows. The version comes from `gradle.properties` and can be overridden with `-Pversion`. Jars are written to `build/libs`.
 
 ## License
 

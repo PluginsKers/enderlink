@@ -1,6 +1,0 @@
-name: enderlink-native-test
-version: '1'
-main: com.eyreland.enderlink.EnderChestNativeTest
-api-version: '26.2'
-folia-supported: true
-depend: [enderlink]

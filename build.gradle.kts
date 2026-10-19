@@ -17,9 +17,6 @@ repositories {
 
 dependencies {
     the<PaperweightUserDependenciesExtension>().foliaDevBundle("26.2.build.4-beta")
-    testImplementation(kotlin("test"))
-    testImplementation("io.papermc.paper:paper-api:26.2.build.111-stable")
-    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.2:4.116.1")
 }
 
 paperweight {
@@ -27,22 +24,11 @@ paperweight {
     reobfArtifactConfiguration.set(ReobfArtifactConfiguration.MOJANG_PRODUCTION)
 }
 
-val nativeTest = sourceSets.create("nativeTest")
-configurations[nativeTest.implementationConfigurationName].extendsFrom(configurations.implementation.get())
-configurations[nativeTest.compileOnlyConfigurationName].extendsFrom(configurations.compileOnly.get())
-nativeTest.compileClasspath += sourceSets.main.get().output
-tasks.register<Jar>("nativeTestJar") {
-    dependsOn(tasks.named(nativeTest.classesTaskName))
-    archiveClassifier.set("native-test")
-    from(nativeTest.output)
-}
-
 tasks.withType<Jar>().configureEach {
     into("META-INF") { from("LICENSE", "NOTICE") }
 }
 
 tasks {
-    test { useJUnitPlatform() }
     processResources {
         inputs.property("version", project.version)
         filteringCharset = "UTF-8"
