@@ -9,13 +9,16 @@ website: https://github.com/PluginsKers/enderlink
 
 commands:
   enderlink:
-    description: Open your ender chest or manage its capacity
-    usage: '/enderlink or /enderlink size <online player> [27|36|45|54]'
+    description: Open your ender chest, manage its capacity, or reload language files
+    usage: '/enderlink [reload | size <online player> [27|36|45|54]]'
 
 permissions:
   enderlink.open:
     description: Open your own ender chest
     default: true
+  enderlink.reload:
+    description: Reload language files
+    default: op
   enderlink.size.query:
     description: Query ender chest capacity
     default: op

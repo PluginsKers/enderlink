@@ -17,6 +17,11 @@ class EnderLinkPlugin : JavaPlugin() {
     }
 
     override fun onEnable() {
+        try {
+            Messages.reload(this)
+        } catch (failure: Exception) {
+            logger.log(Level.WARNING, "Could not load language files; using bundled messages", failure)
+        }
         val manager = EnderChestManager(this)
         server.pluginManager.registerEvents(manager, this)
         server.messenger.registerIncomingPluginChannel(this, EnderChestManager.OPEN_CHANNEL, manager)
