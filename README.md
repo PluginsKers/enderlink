@@ -10,7 +10,7 @@ Use `/enderlink` or the inventory button provided by [Ender Link Client](https:/
 
 ## Installation
 
-Requires Folia 26.2 and Java 25. Place the plugin jar in the server's `plugins` folder and restart.
+Requires Folia 26.2 and Java 25. Download the jar from [Releases](https://github.com/PluginsKers/enderlink/releases), place it in the server's `plugins` folder, and restart.
 
 ## Commands and permissions
 
@@ -52,6 +52,8 @@ The client uses the registered server channel; no additional handshake or capabi
 ```
 
 Use `gradlew.bat` on Windows. The version comes from `gradle.properties` and can be overridden with `-Pversion`. Jars are written to `build/libs`.
+
+GitHub Actions builds every push and pull request. Pushing a tag that matches the version, such as `v0.1.0`, publishes the jar to GitHub Releases.
 
 ## License
 
