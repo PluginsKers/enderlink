@@ -53,7 +53,7 @@ The client uses the registered server channel; no additional handshake or capabi
 
 Use `gradlew.bat` on Windows. The version comes from `gradle.properties` and can be overridden with `-Pversion`. Jars are written to `build/libs`.
 
-GitHub Actions builds every push and pull request. Pushing a tag that matches the version, such as `v0.1.0`, publishes the jar to GitHub Releases.
+GitHub Actions builds every push and pull request. Pushing a tag that matches the version, such as `v0.1.0`, publishes the jar to GitHub Releases. Running the Build workflow manually on `main` with **release** checked tags and publishes the current version instead.
 
 ## License
 
