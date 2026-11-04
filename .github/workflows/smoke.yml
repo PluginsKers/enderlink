@@ -24,8 +24,14 @@ jobs:
             21
             25
           cache: gradle
+      - name: Probe repositories
+        run: |
+          marker=org/gradle/toolchains/foojay-resolver-convention/org.gradle.toolchains.foojay-resolver-convention.gradle.plugin/1.0.0/org.gradle.toolchains.foojay-resolver-convention.gradle.plugin-1.0.0.pom
+          for base in https://maven.fabricmc.net https://maven.kikugie.dev/releases https://plugins.gradle.org/m2 https://repo.maven.apache.org/maven2 https://repo.papermc.io/repository/maven-public https://maven.aliyun.com/repository/public; do
+            curl -sS -o /dev/null -m 60 -w "%{http_code} %{time_total}s $base\n" "$base/$marker" || echo "error $base"
+          done
       - name: Build
-        run: ./gradlew --no-daemon --configure-on-demand :${{ matrix.minecraft }}:assemble
+        run: ./gradlew --no-daemon --configure-on-demand --stacktrace :${{ matrix.minecraft }}:assemble
       - name: Smoke test
         env:
           MINECRAFT: ${{ matrix.minecraft }}
