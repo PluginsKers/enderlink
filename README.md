@@ -10,7 +10,8 @@ Use `/enderlink` or the inventory button provided by [Ender Link Client](https:/
 
 ## Installation
 
-Requires Folia 26.2 and Java 25. Download the jar from [Releases](https://github.com/PluginsKers/enderlink/releases), place it in the server's `plugins` folder, and restart.
+Supports Folia 1.21.11, 26.1.2, 26.2, and 26.3. Folia has no builds for 26.1 or 26.1.1.
+Download the jar matching your server version from [Releases](https://github.com/PluginsKers/enderlink/releases), place it in the server's `plugins` folder, and restart. Use Java 21 for 1.21.11 and Java 25 for 26.x.
 
 ## Commands and permissions
 
@@ -48,12 +49,12 @@ The client uses the registered server channel; no additional handshake or capabi
 ## Building
 
 ```sh
-./gradlew shadowJar
+./gradlew assemble
 ```
 
-Use `gradlew.bat` on Windows. The version comes from `gradle.properties` and can be overridden with `-Pversion`. Jars are written to `build/libs`.
+Use `gradlew.bat` on Windows. Run Gradle with JDK 25; the Java 21 toolchain is downloaded when needed. `assemble` builds all versions; `:1.21.11:assemble` builds one. The version comes from `gradle.properties` and can be overridden with `-Pversion`. Jars are written to `versions/<minecraft>/build/libs`.
 
-GitHub Actions builds every push and pull request. Pushing a tag that matches the version, such as `v0.1.0`, publishes the jar to GitHub Releases. Running the Build workflow manually on `main` with **release** checked tags and publishes the current version instead.
+GitHub Actions builds each supported version. Pushing a tag that matches the version, such as `v0.2.0`, publishes the jars to GitHub Releases. Running the Build workflow manually on `main` with **release** checked tags and publishes the current version instead.
 
 ## License
 

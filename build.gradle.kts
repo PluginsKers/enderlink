@@ -7,7 +7,12 @@ plugins {
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.21"
 }
 
-kotlin { jvmToolchain(25) }
+val minecraftVersion = stonecutter.current.version
+val javaVersion = if (stonecutter.eval(minecraftVersion, "<26.1")) 21 else 25
+version = "${providers.gradleProperty("version").get()}+mc$minecraftVersion"
+base { archivesName.set("enderlink") }
+
+kotlin { jvmToolchain(javaVersion) }
 
 repositories {
     maven("https://maven.aliyun.com/repository/public")
@@ -16,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    the<PaperweightUserDependenciesExtension>().foliaDevBundle("26.2.build.4-beta")
+    the<PaperweightUserDependenciesExtension>().foliaDevBundle(property("folia_version").toString())
 }
 
 paperweight {
@@ -25,19 +30,20 @@ paperweight {
 }
 
 tasks.withType<Jar>().configureEach {
-    into("META-INF") { from("LICENSE", "NOTICE") }
+    into("META-INF") { from(rootProject.file("LICENSE"), rootProject.file("NOTICE")) }
 }
 
 tasks {
     processResources {
-        inputs.property("version", project.version)
+        val properties = mapOf("version" to project.version, "minecraft" to minecraftVersion)
+        inputs.properties(properties)
         filteringCharset = "UTF-8"
-        filesMatching("plugin.yml") { expand("version" to project.version) }
+        filesMatching("plugin.yml") { expand(properties) }
     }
     jar { enabled = false }
     shadowJar {
         archiveClassifier.set("")
         mergeServiceFiles()
     }
-    build { dependsOn(shadowJar) }
+    assemble { dependsOn(shadowJar) }
 }

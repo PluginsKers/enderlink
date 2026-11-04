@@ -7,6 +7,10 @@ run/
 .idea/
 *.iml
 
+# Stonecutter
+.stonecutter/
+versions/*/src/
+
 .claude/
 .codegraph/
 CLAUDE.md
