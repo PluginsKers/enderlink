@@ -28,6 +28,8 @@ spawn-protection=0
 view-distance=3
 simulation-distance=3
 max-players=4
+white-list=false
+enforce-whitelist=false
 '''
 FORBIDDEN = re.compile(r'com\.eyreland\.enderlink|preflight failed|Ender chest failure|(WARN|ERROR)\].*\[enderlink\]')
 
@@ -183,6 +185,8 @@ class Client:
         self.protocol = protocol
         self.connection = Connection()
         self.joined = threading.Event()
+        self.opened = threading.Event()
+        self.container = self.state_id = 0
         self.stopping = False
         self.failure = None
         self.thread = threading.Thread(target=self.run, daemon=True)
@@ -238,6 +242,12 @@ class Client:
                     state = 'play'
             elif name == 'login':
                 self.joined.set()
+            elif name == 'open_screen':
+                self.container = reader.varint()
+                self.opened.set()
+            elif name in ('container_set_content', 'container_set_slot'):
+                if reader.varint() == self.container:
+                    self.state_id = reader.varint()
             elif name == 'keep_alive':
                 reply('keep_alive', reader.take(8))
             elif name == 'ping':
@@ -255,6 +265,19 @@ class Client:
 
     def command(self, command):
         self.connection.send(self.protocol.serverbound('play', 'chat_command'), text(command))
+
+    def wait_opened(self, timeout=30):
+        if not self.opened.wait(timeout):
+            raise Failure('等待打开末影箱超时')
+
+    def click(self, slot):
+        # 左键拾取或放下；不预测槽位变化，服务端会以自身状态为准并重新同步。
+        payload = varint(self.container) + varint(self.state_id) + struct.pack('>hb', slot, 0) + varint(0) + varint(0) + b'\0'
+        self.connection.send(self.protocol.serverbound('play', 'container_click'), payload)
+
+    def close_container(self):
+        self.connection.send(self.protocol.serverbound('play', 'container_close'), varint(self.container))
+        self.opened.clear()
 
     def close(self):
         self.stopping = True
@@ -355,22 +378,35 @@ def player_command(server, client, command, pattern):
 
 
 def first_login(server, client):
-    # 新玩家从 27 格起步；扩到 54 格后写入最后一个新增槽位。
+    # 新玩家从 27 格起步；扩到 54 格后通过真实界面把物品放进最后一个新增槽位。
     server.run(f'op {NAME}', rf'Made {NAME} a server operator')
     server.run('enderlink reload', r'Language files reloaded\.')
     server.run(f'enderlink size {NAME}', rf"{NAME}'s ender chest has 27 slots\.")
     server.run(f'enderlink size {NAME} 54', rf"Set {NAME}'s ender chest capacity to 54 slots\.")
-    player_command(server, client, 'item replace entity @s enderchest.53 with minecraft:diamond 5', rf'Replaced a slot on {NAME}')
+    server.run(f'give {NAME} minecraft:diamond 5', rf'Gave 5 \[Diamond\] to {NAME}')
+    time.sleep(2)
+    print(f'{NAME}> /enderlink', flush=True)
+    client.command('enderlink')
+    client.wait_opened()
+    time.sleep(1)
+    # 六行箱子界面中 0-53 为末影箱，81 为快捷栏第一格。
+    client.click(81)
+    time.sleep(0.5)
+    client.click(53)
+    time.sleep(0.5)
+    client.close_container()
+    time.sleep(1)
+    server.run(f'enderlink size {NAME} 27', r'Remove items from the slots beyond the requested capacity first\.')
 
 
 def second_login(server, client):
     # 重新登录后容量与新增槽位中的物品都必须保留，且不能缩容丢弃物品。
     server.run(f'enderlink size {NAME}', rf"{NAME}'s ender chest has 54 slots\.")
-    player_command(
-        server, client, 'execute if items entity @s enderchest.53 minecraft:diamond run tag @s add enderlink_kept',
-        rf"Added tag 'enderlink_kept' to {NAME}",
-    )
     server.run(f'enderlink size {NAME} 27', r'Remove items from the slots beyond the requested capacity first\.')
+    player_command(
+        server, client, 'execute if items entity @s enderchest.53 minecraft:diamond run say enderlink-slot-53-kept',
+        rf'\[{NAME}\] enderlink-slot-53-kept',
+    )
 
 
 def main():
