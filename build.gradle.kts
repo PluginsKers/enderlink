@@ -8,9 +8,14 @@ plugins {
 }
 
 val minecraftVersion = stonecutter.current.version
-val javaVersion = if (stonecutter.eval(minecraftVersion, "<26.1")) 21 else 25
+val legacy = stonecutter.eval(minecraftVersion, "<26.1")
+val javaVersion = if (legacy) 21 else 25
 version = "${providers.gradleProperty("version").get()}+mc$minecraftVersion"
 base { archivesName.set("enderlink") }
+
+stonecutter.replacements {
+    string(legacy) { replace("\"packetListener\"", "\"handle\"") }
+}
 
 kotlin { jvmToolchain(javaVersion) }
 
