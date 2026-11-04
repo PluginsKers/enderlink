@@ -1,7 +1,7 @@
 name: enderlink
 version: '${version}'
 main: com.eyreland.enderlink.EnderLinkPlugin
-api-version: '26.2'
+api-version: '${minecraft}'
 folia-supported: true
 description: 'Portable ender chests with native capacity management'
 author: PluginsKers
